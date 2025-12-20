@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book A Star | Premium Artist Discovery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-purple: #8A2BE2;
+            --brand-glow: rgba(138, 43, 226, 0.4);
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #08080A; 
+            color: #FFFFFF;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Utility */
+        .glass { 
+            background: rgba(255, 255, 255, 0.02); 
+            backdrop-filter: blur(15px); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+        }
+
+        /* Hero Typography */
+        .stars-bold {
+            font-weight: 800;
+            background: linear-gradient(to right, #fff 20%, #A855F7 50%, #fff 80%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 5s linear infinite;
+        }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        /* Waveform Animation */
+        .path-anim {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            filter: drop-shadow(0 0 8px var(--brand-glow));
+        }
+
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+        /* Card Interactions */
+        .artist-card { transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); }
+        .artist-card:hover { 
+            transform: translateY(-8px); 
+            border-color: rgba(138, 43, 226, 0.4);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #8A2BE2 0%, #4B0082 100%);
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #08080A; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8A2BE2; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <nav class="sticky top-0 z-50 px-8 py-5 glass flex justify-between items-center border-b border-white/5">
+        <div class="text-xl font-extrabold tracking-tighter uppercase flex items-center gap-2">
+            <span class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-xs">★</span>
+            BOOK<span class="text-purple-500">A</span>STAR
+        </div>
+        <div class="hidden md:flex space-x-10 text-[13px] font-medium uppercase tracking-widest text-gray-400">
+            <a href="#" class="hover:text-white transition">Discovery</a>
+            <a href="#" class="hover:text-white transition">Pricing</a>
+            <a href="#" class="hover:text-white transition">Verify Talent</a>
+        </div>
+        <div class="flex items-center space-x-6">
+            <button class="text-sm font-semibold hover:text-purple-400 transition">Partner Login</button>
+            <button class="btn-gradient px-7 py-2.5 rounded-full text-sm font-bold uppercase tracking-tight">Join</button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6">
+        
+        <section class="relative pt-28 pb-20 text-center">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[400px] bg-purple-600/5 blur-[120px] rounded-full pointer-events-none"></div>
+            
+            <div class="relative z-10">
+                <h1 class="text-5xl md:text-7xl mb-4 tracking-tight">
+                    <span class="font-light text-gray-400">Discover</span> 
+                    <span class="relative inline-block">
+                        <span class="stars-bold italic">Local Stars</span>
+                        <div class="absolute -bottom-4 left-0 w-full">
+                            <svg viewBox="0 0 300 12" fill="none" class="w-full h-3">
+                                <path d="M2 10C30 10 50 2 80 2C110 2 130 10 160 10C190 10 210 2 240 2C270 2 298 10 298 10" 
+                                      stroke="url(#line-grad)" stroke-width="3" stroke-linecap="round" class="path-anim"/>
+                                <defs>
+                                    <linearGradient id="line-grad" x1="0" y1="0" x2="300" y2="0" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#8A2BE2" />
+                                        <stop offset="0.5" stop-color="#D8B4FE" />
+                                        <stop offset="1" stop-color="#8A2BE2" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                    </span>
+                </h1>
+                <p class="text-gray-500 text-lg md:text-xl font-light mt-10 max-w-2xl mx-auto tracking-wide">
+                    The elite marketplace connecting world-class <span class="text-white">singers, DJs, and performers</span> with the world’s most iconic events.
+                </p>
+
+                <div class="mt-16 glass p-2 rounded-2xl flex flex-col md:flex-row items-center gap-2 shadow-2xl max-w-4xl mx-auto border-white/5">
+                    <div class="flex items-center flex-grow w-full px-5">
+                        <span class="text-purple-500 mr-3">●</span>
+                        <input type="text" placeholder="Search talent..." class="bg-transparent py-4 w-full outline-none text-white placeholder-gray-600">
+                    </div>
+                    <div class="hidden md:block w-px h-10 bg-white/10"></div>
+                    <div class="flex items-center w-full md:w-auto px-5">
+                        <input type="text" placeholder="Event Location" class="bg-transparent py-4 w-full md:w-48 outline-none text-white placeholder-gray-600">
+                    </div>
+                    <button class="w-full md:w-auto btn-gradient px-12 py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:scale-[1.02] transition-transform">
+                        Search
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-20 grid grid-cols-1 lg:grid-cols-4 gap-12">
+            
+            <aside class="space-y-10">
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-purple-500 mb-6">Expertise</h3>
+                    <div class="space-y-4 text-sm text-gray-400">
+                        <label class="flex items-center justify-between cursor-pointer group hover:text-white transition">
+                            <span>Vocalists</span>
+                            <input type="checkbox" class="accent-purple-600">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer group hover:text-white transition">
+                            <span>Electronic DJs</span>
+                            <input type="checkbox" class="accent-purple-600">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer group hover:text-white transition">
+                            <span>Stand-up Artists</span>
+                            <input type="checkbox" class="accent-purple-600">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-gradient-to-br from-purple-900/20 to-transparent border border-purple-500/20">
+                    <h4 class="text-sm font-bold mb-2">Verified Talent Only</h4>
+                    <p class="text-xs text-gray-500 leading-relaxed">Show only artists who have passed our professional background check.</p>
+                    <div class="mt-4 w-10 h-5 bg-purple-600 rounded-full relative cursor-pointer">
+                        <div class="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <div class="artist-card glass rounded-[2rem] overflow-hidden group border-white/5">
+                    <div class="relative h-72">
+                        <img src="https://images.unsplash.com/photo-1525410188844-d4e4ad962a33?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#08080A] via-transparent to-transparent"></div>
+                        <div class="absolute top-5 right-5 glass px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase">
+                            $500/hr
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Available This Weekend</span>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-1">Julianne Voss</h2>
+                        <p class="text-purple-400 text-xs font-bold uppercase tracking-widest mb-4">Soul & Jazz Vocalist</p>
+                        <div class="flex items-center justify-between mt-8 pt-6 border-t border-white/5">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full border-2 border-[#08080A] bg-gray-800"></div>
+                                <div class="w-8 h-8 rounded-full border-2 border-[#08080A] bg-gray-700"></div>
+                                <span class="pl-4 text-xs text-gray-500 self-center">+ 42 Recent Gigs</span>
+                            </div>
+                            <button class="text-xs font-black uppercase tracking-widest border-b-2 border-purple-600 pb-1 hover:text-purple-400 transition">Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="artist-card glass rounded-[2rem] overflow-hidden group border-white/5">
+                    <div class="relative h-72">
+                        <img src="https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#08080A] via-transparent to-transparent"></div>
+                        <div class="absolute top-5 right-5 glass px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase">
+                            $350/hr
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Top Rated Performer</span>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-1">Marcus Echo</h2>
+                        <p class="text-purple-400 text-xs font-bold uppercase tracking-widest mb-4">Deep House / Melodic DJ</p>
+                        <div class="flex items-center justify-between mt-8 pt-6 border-t border-white/5">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full border-2 border-[#08080A] bg-gray-800"></div>
+                                <div class="w-8 h-8 rounded-full border-2 border-[#08080A] bg-gray-700"></div>
+                                <span class="pl-4 text-xs text-gray-500 self-center">+ 89 Recent Gigs</span>
+                            </div>
+                            <button class="text-xs font-black uppercase tracking-widest border-b-2 border-purple-600 pb-1 hover:text-purple-400 transition">Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-20 text-center border-t border-white/5 mt-20">
+        <p class="text-[10px] font-bold text-gray-600 uppercase tracking-[0.5em]">Book A Star © 2025 • Elevating Performance Culture</p>
+    </footer>
+
+</body>
+</html>
