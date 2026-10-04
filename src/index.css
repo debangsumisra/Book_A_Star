@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Design tokens (brief §11). Each one becomes a utility automatically:
+   --color-ink -> bg-ink, text-ink, border-ink ...
+   Change a colour here and it changes everywhere. */
+@theme {
+  --color-ink: #0b1026;        /* page background: dark navy */
+  --color-panel: #141a3a;      /* cards */
+  --color-line: #2a3160;       /* subtle borders */
+  --color-gold: #f5c542;       /* primary accent */
+  --color-gold-dark: #d9a920;  /* gold hover state */
+  --color-glow: #7c3aed;       /* purple glow */
+  --color-danger: #f87171;     /* error text */
+}
