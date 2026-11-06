@@ -37,7 +37,7 @@ export default function Signup() {
         role,
       })
       if (needsEmailConfirmation) setIsAwaitingConfirmation(true)
-      else navigate('/')
+      else navigate('/dashboard')
     } catch (error) {
       setErrorMessage(friendlyAuthError(error))
     } finally {

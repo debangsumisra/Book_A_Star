@@ -89,8 +89,11 @@ Book_A_star/
 ├── vite.config.js
 ├── docs/
 │   └── PROJECT_BRIEF.md  # source of truth for WHAT we are building
+├── e2e/                  # Playwright end-to-end tests
 ├── supabase/
-│   └── migrations/       # .sql files — every schema change, in order
+│   ├── migrations/       # .sql files — every schema change, in order
+│   ├── tests/            # SQL tests for RLS and booking rules (rolled back)
+│   └── seed/             # e2e test accounts + cleanup
 └── src/
     ├── main.jsx          # mounts React, wraps the app in BrowserRouter
     ├── App.jsx           # route table only
@@ -100,7 +103,8 @@ Book_A_star/
     ├── pages/            # one file per route (Home.jsx, Login.jsx, ...)
     ├── components/       # reusable pieces used by 2+ pages (Button, Card, Navbar)
     ├── hooks/            # custom hooks, including all data fetching (useBookings.js)
-    └── context/          # React context providers (AuthContext.jsx)
+    ├── context/          # React context providers (AuthContext.jsx)
+    └── test/             # Vitest setup + render helper
 ```
 
 **The rule that keeps this clean:** `pages/` decides *what* to show,
@@ -275,7 +279,7 @@ steps 8–12 are done against `profiles` and `artist_profiles` specifically.
 
 ## 6. Database schema
 
-> **Status: approved and written to `supabase/migrations/001`–`015`.**
+> **Status: approved and written to `supabase/migrations/001`–`020`.**
 > This section is the readable summary; the `.sql` files are the truth.
 > Any schema change means a NEW numbered migration — never edit one that has
 > already been run.
@@ -284,7 +288,12 @@ Run order: `001_enums` → `002_profiles` → `003_artist_profiles` →
 `004_organizer_profiles` → `005_portfolio_items` → `006_availability` →
 `007_events` → `008_bookings` → `009_messages` → `010_reviews` →
 `011_notifications` → `012_reports` → `013_search` → `014_storage` →
-`015_realtime`.
+`015_realtime` → `016_advisor_fixes` → `017_tighten_grants` →
+`018_booking_rules_and_notifications` → `019_negotiation_rules` →
+`020_merge_select_policies`.
+
+Database tests: `supabase/tests/001_security_and_booking_flow.sql` (runs in a
+rolled-back transaction). Re-run it after every migration.
 
 ### Enums
 
@@ -347,7 +356,9 @@ default true · `created_at` · `updated_at`
 no join)* · `event_date` date *(copied from the event, for the double-booking
 index)* · `initiated_by` user_role · `status` booking_status default requested ·
 `proposed_price` · `agreed_price` · `currency` · `notes` ·
-`cancelled_by` uuid · `cancellation_reason` · `created_at` · `updated_at`
+`cancelled_by` uuid · `cancellation_reason` · `last_offer_by` uuid *(019 —
+who put the current price on the table; trigger-maintained)* ·
+`created_at` · `updated_at`
 - UNIQUE(`event_id`, `artist_id`)
 - **Partial unique index** on (`artist_id`, `event_date`)
   WHERE `status` IN ('accepted','confirmed') — the double-booking guard.
@@ -399,13 +410,16 @@ recursion**: a policy on `profiles` cannot itself `SELECT FROM profiles`.
 - `is_booking_participant(uuid)`, `booking_is_open(uuid)`, `can_review_booking(uuid)`
 - `notify(...)` plus every trigger function
 
-`public.*` — exactly three, all deliberate client RPCs:
+`public.*` — exactly four, all deliberate client RPCs:
 - `artist_is_available(artist_id uuid, d date) → boolean`
   (checks `availability` **and** accepted/confirmed `bookings`; `SECURITY DEFINER`
   because it must read `bookings`, which the caller cannot)
 - `search_artists(...)` — directory search. **`SECURITY INVOKER`**: RLS already
   grants read access to published artists, so there is no reason to switch it off.
 - `mark_messages_read(booking_id uuid)` — the only way to set `read_at`
+- `artist_booked_dates(artist_id, from, to) → setof date` (018) — dates only,
+  for the public calendar's "booked" days; `SECURITY DEFINER` for the same
+  reason as `artist_is_available`
 
 ### Triggers
 
@@ -418,21 +432,27 @@ recursion**: a policy on `profiles` cannot itself `SELECT FROM profiles`.
 | `sync_booking_event_date` on `bookings` | copy `event_date` from the event |
 | `recalc_artist_rating` on `reviews` | maintain `rating_avg`, `rating_count` |
 | `set_updated_at` on all tables with it | timestamp maintenance |
+| `validate_new_booking` on `bookings` (018/019) | new request must target an open, future, (for artists) public event and a published artist; stamps `last_offer_by` |
+| `guard_booking_price` on `bookings` (018/019) | price locked after acceptance; `agreed_price` set only on accept; `last_offer_by` / `cancelled_by` set by the DB; first counter moves `requested → negotiating` |
+| `on_booking_change`, `on_new_message`, `on_new_review`, `on_verification_change` (018/019) | write notifications and system / price-offer messages |
 
-**Booking state machine** (enforced in the trigger, not in RLS — RLS can see
-the new row but expressing *transitions* belongs in a trigger):
+**Booking state machine** (019 — enforced in the trigger, not in RLS). An
+offer is accepted by the side that did **not** make it. The *initiator* is
+whoever opened the booking (`initiated_by`); the other side is the *responder*.
 
 | From | To | Who |
 |---|---|---|
-| requested | negotiating, accepted, rejected | artist |
-| requested | cancelled | organizer |
-| negotiating | accepted, rejected | artist |
-| negotiating | cancelled | organizer |
+| requested / negotiating | (price change) | either participant; `requested` becomes `negotiating` |
+| requested / negotiating | accepted | the participant who did not make the latest offer (`last_offer_by`) |
+| requested / negotiating | rejected | the responder |
+| requested / negotiating | cancelled | the initiator (withdraw) |
 | accepted | confirmed | organizer |
 | accepted | cancelled | either |
 | confirmed | completed | either, only on/after `event_date` |
 | confirmed | cancelled | either |
 | completed / rejected / cancelled | — | terminal |
+
+The UI mirror of this table is `src/lib/bookingRules.js`; keep them in step.
 
 ### RLS policies
 
@@ -443,7 +463,7 @@ policy exists, so the operation is impossible for normal users.
 |---|---|---|---|---|
 | `profiles` | self, admin, or someone you share a booking with | self (`id = auth.uid()`) | self or admin | — |
 | `profiles_private` | self or admin | self | self or admin | — |
-| `artist_profiles` | **anon + auth** where `is_published`; plus self; plus admin | self, and role is artist | self or admin | self or admin |
+| `artist_profiles` | **anon + auth** where `is_published`; plus self, admin, and anyone sharing a booking | self, and role is artist | self or admin | self or admin |
 | `organizer_profiles` | self, admin, or an artist who shares a booking | self, and role is organizer | self or admin | self or admin |
 | `portfolio_items` | **anon + auth** when parent artist is published; plus owner, admin | owner | owner | owner or admin |
 | `availability` | **anon + auth** when parent artist is published | owner | owner | owner |
@@ -463,7 +483,7 @@ policy exists, so the operation is impossible for normal users.
 
 ### Realtime
 
-Enable on `messages` and `bookings` only. Realtime respects RLS, so the
+Enabled on `messages`, `bookings` and (018) `notifications`. Realtime respects RLS, so the
 policies above are what keep subscriptions private.
 
 ### Deliberate deviations from brief §9
@@ -481,6 +501,8 @@ policies above are what keep subscriptions private.
    copies. Justified: both are needed inside RLS policies and the
    double-booking index, where a join would be slow and awkward. Kept
    truthful by the `sync_booking_event_date` trigger.
+6. **Artists can apply to events** (`initiated_by = 'artist'`), and the state
+   machine is symmetric between the two sides (019) — see the table above.
 
 ---
 
@@ -492,6 +514,8 @@ policies above are what keep subscriptions private.
 | `npm run dev` | Start the dev server at `http://localhost:5173` |
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serve the production build locally to verify it |
+| `npm test` | Unit + component tests (Vitest, jsdom). No network |
+| `npm run test:e2e` | Playwright end-to-end tests against the real Supabase project (see `e2e/README.md`) |
 
 Restart `npm run dev` after editing `.env` — Vite reads env vars only at startup.
 
